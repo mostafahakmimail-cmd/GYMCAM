@@ -1,0 +1,38 @@
+name: Build GymCam
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Show Xcode version
+        run: xcodebuild -version
+
+      - name: Build app (unsigned)
+        run: |
+          xcodebuild \
+            -project GymCam.xcodeproj \
+            -target GymCam \
+            -configuration Release \
+            -sdk iphoneos \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            build
+
+      - name: Package .ipa
+        run: |
+          mkdir -p Payload
+          cp -R build/Release-iphoneos/GymCam.app Payload/
+          zip -qry GymCam.ipa Payload
+
+      - name: Upload .ipa
+        uses: actions/upload-artifact@v4
+        with:
+          name: GymCam-ipa
+          path: GymCam.ipa
